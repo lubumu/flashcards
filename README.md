@@ -57,3 +57,31 @@ python adeamus_to_flashcards.py \
 - The parser uses heuristics for lesson detection and vocabulary splitting.
 - If your source has a different layout, adapt `ENTRY_SEPARATORS` and lesson regex in `adeamus_to_flashcards.py`.
 - Output workbook contains one sheet named `flashcards`.
+
+## Flashcard Apps
+
+The project now includes two study applications that both use the same SQLite progress database.
+
+### Desktop app
+
+```bash
+python flashcard_app.py
+```
+
+### Web app
+
+Install dependencies first:
+
+```bash
+pip install -r requirements.txt
+```
+
+Then start the Flask server:
+
+```bash
+python flashcard_web.py
+```
+
+Open `http://127.0.0.1:5000` in your browser.
+
+The web app keeps progress in `flashcards.db`, grouped by lesson, and uses the same adaptive repetition weights as the desktop app.

@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+{% block title %}Lektion {{ lesson }}{% endblock %}
+{% block content %}
+<div class="lesson-header">
+  <div>
+    <a class="back-link" href="{{ url_for('home') }}">Zurück zur Übersicht</a>
+    <p class="eyebrow">Lektion {{ lesson }}</p>
+    <h1>Adaptive Wiederholung</h1>
+  </div>
+  <form method="post" action="{{ url_for('reset_lesson_session', lesson=lesson) }}">
+    <button class="secondary-button" type="submit">Lernrunde zurücksetzen</button>
+  </form>
+</div>
+
+<div class="dashboard-grid lesson-grid">
+  <section class="panel study-panel">
+    <div class="stats-strip">
+      <div><span>{{ dashboard.stats.total }}</span><label>Wörter</label></div>
+      <div><span>{{ dashboard.stats.learned }}</span><label>Gelernt</label></div>
+      <div><span>{{ dashboard.stats.avg_rating }}</span><label>Ø Bewertung</label></div>
+      <div><span>{{ dashboard.stats.progress_pct }}%</span><label>Fortschritt</label></div>
+    </div>
+
+    {% if card %}
+    <article class="flashcard" data-flashcard>
+      <p class="card-kicker">Latein</p>
+      <h2>{{ card.latin }}</h2>
+      <div class="answer-panel" hidden data-answer>
+        <p class="card-kicker">Deutsch</p>
+        <p class="answer-text">{{ card.german }}</p>
+        <p class="meta-text">Vorherige Bewertung: {% if card.rating %}{{ card.rating }}/5{% else %}noch keine{% endif %} · {{ card.review_count }} Wiederholungen</p>
+      </div>
+
+      <button class="reveal-button" type="button" data-reveal>Antwort aufdecken</button>
+
+      <form class="rating-form" method="post" action="{{ url_for('rate_card', lesson=lesson) }}" hidden data-rating-form>
+        <p>Wie gut erinnert?</p>
+        <div class="rating-grid">
+          <button class="rating-button rating-1" type="submit" name="rating" value="1">1<br><span>Gar nicht</span></button>
+          <button class="rating-button rating-2" type="submit" name="rating" value="2">2<br><span>Schwach</span></button>
+          <button class="rating-button rating-3" type="submit" name="rating" value="3">3<br><span>Teilweise</span></button>
+          <button class="rating-button rating-4" type="submit" name="rating" value="4">4<br><span>Gut</span></button>
+          <button class="rating-button rating-5" type="submit" name="rating" value="5">5<br><span>Perfekt</span></button>
+        </div>
+      </form>
+    </article>
+    {% else %}
+    <div class="empty-card">
+      <h2>Keine Karten gefunden</h2>
+      <p>Für diese Lektion sind aktuell keine Vokabeln verfügbar.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <aside class="sidebar-stack">
+    <section class="panel">
+      <div class="section-head">
+        <h2>Schwierige Wörter</h2>
+        <p>Besonders relevante Karten dieser Lektion.</p>
+      </div>
+      <ul class="word-list">
+        {% for lesson_name, latin, german, rating, reviews in dashboard.difficult_words %}
+        <li>
+          <strong>{{ latin }}</strong>
+          <span>{{ german }}</span>
+          <small>{{ rating }}/5 · {{ reviews }} Wiederholungen</small>
+        </li>
+        {% else %}
+        <li class="empty-state">Noch keine schwierigen Wörter in dieser Lektion.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <h2>Letzte Aktivität</h2>
+        <p>Zuletzt bewertete Wörter dieser Lektion.</p>
+      </div>
+      <ul class="activity-list">
+        {% for lesson_name, latin, german, rating, reviewed_at, reviews in dashboard.recent_activity %}
+        <li>
+          <strong>{{ latin }}</strong>
+          <span>{{ german }}</span>
+          <small>{{ rating }}/5 · {{ reviews }}x</small>
+        </li>
+        {% else %}
+        <li class="empty-state">Noch keine Bewertungen vorhanden.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </aside>
+</div>
+
+<script>
+  const flashcard = document.querySelector('[data-flashcard]');
+  if (flashcard) {
+    const revealButton = flashcard.querySelector('[data-reveal]');
+    const answer = flashcard.querySelector('[data-answer]');
+    const ratingForm = flashcard.querySelector('[data-rating-form]');
+
+    revealButton.addEventListener('click', () => {
+      answer.hidden = false;
+      ratingForm.hidden = false;
+      revealButton.hidden = true;
+    });
+  }
+</script>
+{% endblock %}

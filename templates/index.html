@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block title %}Adeamus Trainer{% endblock %}
+{% block content %}
+<div class="hero">
+  <div>
+    <p class="eyebrow">Latein lernen mit Fokus auf schwache Wörter</p>
+    <h1>Adeamus Vokabeltrainer</h1>
+    <p class="lede">Wähle eine Lektion und lerne mit adaptiver Wiederholung. Schwache Karten kommen häufiger zurück, sichere Wörter treten in den Hintergrund.</p>
+  </div>
+  <div class="hero-card">
+    <div class="metric"><span>{{ global_stats.total }}</span><label>Wörter gesamt</label></div>
+    <div class="metric"><span>{{ global_stats.learned }}</span><label>Gelernt</label></div>
+    <div class="metric"><span>{{ global_stats.avg_rating }}</span><label>Ø Bewertung</label></div>
+    <div class="metric"><span>{{ global_stats.progress_pct }}%</span><label>Fortschritt</label></div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <section class="panel lessons-panel">
+    <div class="section-head">
+      <h2>Lektionen</h2>
+      <p>Nur Karten der gewählten Lektion werden abgefragt.</p>
+    </div>
+    <div class="lesson-list">
+      {% for lesson in lessons %}
+      <article class="lesson-card">
+        <div>
+          <h3>Lektion {{ lesson.name }}</h3>
+          <p>{{ lesson.stats.total }} Wörter · {{ lesson.stats.learned }} gelernt · Ø {{ lesson.stats.avg_rating }}</p>
+          <div class="progress-row">
+            <div class="progress-bar"><span style="width: {{ lesson.stats.progress_pct }}%"></span></div>
+            <strong>{{ lesson.stats.progress_pct }}%</strong>
+          </div>
+        </div>
+        <a class="primary-link" href="{{ url_for('lesson_view', lesson=lesson.name) }}">Lernen</a>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <aside class="sidebar-stack">
+    <section class="panel">
+      <div class="section-head">
+        <h2>Schwierige Wörter</h2>
+        <p>Niedrige Bewertungen werden priorisiert.</p>
+      </div>
+      <ul class="word-list">
+        {% for lesson, latin, german, rating, reviews in difficult_words %}
+        <li>
+          <strong>L{{ lesson }} · {{ latin }}</strong>
+          <span>{{ german }}</span>
+          <small>Bewertung {{ rating }}/5 · {{ reviews }} Wiederholungen</small>
+        </li>
+        {% else %}
+        <li class="empty-state">Noch keine schwierigen Wörter erfasst.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <h2>Letzte Aktivität</h2>
+        <p>Fortschritt bleibt dauerhaft gespeichert.</p>
+      </div>
+      <ul class="activity-list">
+        {% for lesson, latin, german, rating, reviewed_at, reviews in recent_activity %}
+        <li>
+          <strong>L{{ lesson }} · {{ latin }}</strong>
+          <span>{{ german }}</span>
+          <small>{{ rating }}/5 · {{ reviews }}x</small>
+        </li>
+        {% else %}
+        <li class="empty-state">Noch keine Bewertungen gespeichert.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </aside>
+</div>
+{% endblock %}
