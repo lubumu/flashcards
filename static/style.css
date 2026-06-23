@@ -130,6 +130,7 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, 1.8fr) minmax(300px, 0.9fr);
   gap: 24px;
+  align-items: start;
 }
 
 .lesson-grid {
@@ -158,6 +159,7 @@ h3 {
 .sidebar-stack {
   display: grid;
   gap: 16px;
+  auto-rows: max-content;
 }
 
 .lesson-card {
