@@ -263,6 +263,7 @@ h3 {
 .answer-panel {
   border-top: 1px solid var(--line);
   margin-top: 24px;
+  margin-bottom: 12px;
   padding-top: 24px;
   animation: fadeUp 180ms ease;
 }
