@@ -11,7 +11,12 @@ from flask import Flask, abort, redirect, render_template, request, session, url
 from flashcard_core import SpacedRepetitionEngine, initialize_database
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "flashcards.db"
+# Vercel serverless functions have a read-only project filesystem.
+# Use /tmp for runtime SQLite writes when deployed there.
+if os.environ.get("VERCEL"):
+    DB_PATH = Path("/tmp/flashcards.db")
+else:
+    DB_PATH = BASE_DIR / "flashcards.db"
 EXCEL_PATH = BASE_DIR / "out/adeamus_flashcards.xlsx"
 RECENT_SESSION_KEY = "recent_cards"
 CURRENT_CARD_KEY = "current_cards"
