@@ -25,8 +25,8 @@
     </div>
     <div class="lesson-list">
       {% for lesson in lessons %}
-      <article class="lesson-card" data-lesson-card data-lesson="{{ lesson }}">
-        <div>
+      <a class="lesson-card" href="{{ url_for('lesson_view', lesson=lesson) }}" data-lesson-card data-lesson="{{ lesson }}">
+        <div class="lesson-card-body">
           <h3>Lektion {{ lesson }}</h3>
           <p data-lesson-summary></p>
           <div class="progress-row">
@@ -34,8 +34,8 @@
             <strong data-lesson-pct>0%</strong>
           </div>
         </div>
-        <a class="primary-link" href="{{ url_for('lesson_view', lesson=lesson) }}">Lernen</a>
-      </article>
+        <span class="primary-link lesson-cta">Lernen</span>
+      </a>
       {% endfor %}
     </div>
   </section>

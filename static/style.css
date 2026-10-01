@@ -179,6 +179,8 @@ h3 {
 }
 
 .lesson-card {
+  color: inherit;
+  text-decoration: none;
   border-radius: 22px;
   padding: 18px 20px;
   display: flex;
@@ -429,8 +431,7 @@ h3 {
     display: grid;
   }
 
-  .stats-strip,
-  .rating-grid {
+  .stats-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -457,14 +458,171 @@ h3 {
     border-radius: 22px;
   }
 
-  .stats-strip,
-  .rating-grid,
+  /* Home */
+  .hero,
+  .lesson-header {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .eyebrow {
+    margin-bottom: 6px;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+    max-width: none;
+  }
+
+  .lede,
+  .section-head p,
+  .lesson-card p,
+  .lesson-cta {
+    display: none;
+  }
+
+  .hero-card,
+  .stats-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
   .hero-card {
-    grid-template-columns: 1fr;
+    padding: 8px;
+    border-radius: 18px;
+  }
+
+  .metric,
+  .stats-strip div {
+    min-height: 0;
+    padding: 8px 6px;
+    border-radius: 12px;
+    gap: 2px;
+    text-align: center;
+  }
+
+  .metric span,
+  .stats-strip span {
+    font-size: 1.15rem;
+  }
+
+  .metric label,
+  .stats-strip label {
+    font-size: 0.66rem;
+    line-height: 1.2;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+
+  .section-head {
+    margin-bottom: 10px;
+  }
+
+  .lesson-list {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px;
   }
 
   .lesson-card {
-    align-items: start;
-    flex-direction: column;
+    display: block;
+    padding: 10px 12px;
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
+  .lesson-card h3 {
+    font-size: 1rem;
+  }
+
+  .lesson-card .progress-row {
+    margin-top: 6px;
+    gap: 6px;
+    font-size: 0.8rem;
+  }
+
+  .lesson-card .progress-bar {
+    height: 6px;
+  }
+
+  /* Lesson */
+  .lesson-header {
+    display: flex;
+    align-items: center;
+  }
+
+  .lesson-header h1 {
+    display: none;
+  }
+
+  .lesson-header .eyebrow {
+    margin: 0;
+  }
+
+  .back-link {
+    margin-bottom: 4px;
+  }
+
+  .lesson-header .secondary-button {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  .study-panel {
+    gap: 12px;
+  }
+
+  .study-panel .flashcard {
+    order: -1;
+  }
+
+  .flashcard {
+    padding: 18px;
+  }
+
+  .card-kicker {
+    margin-bottom: 8px;
+  }
+
+  .flashcard h2 {
+    font-size: 1.9rem;
+    margin-bottom: 14px;
+  }
+
+  .answer-panel {
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+
+  .answer-text {
+    font-size: 1.15rem;
+  }
+
+  .reveal-button {
+    width: 100%;
+  }
+
+  .rating-form {
+    margin-top: 12px;
+  }
+
+  .rating-form p {
+    margin: 0 0 8px;
+  }
+
+  .rating-grid {
+    gap: 6px;
+  }
+
+  .rating-button {
+    padding: 10px 2px;
+    font-size: 1.1rem;
+    border-radius: 14px;
+  }
+
+  .rating-button span {
+    margin-top: 2px;
+    font-size: 0.6rem;
   }
 }
