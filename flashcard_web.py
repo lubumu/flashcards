@@ -3,12 +3,13 @@
 
 import os
 import secrets
+from datetime import timedelta
 from hashlib import sha256
 from pathlib import Path
 
 from flask import Flask, abort, redirect, render_template, request, session, url_for
 
-from flashcard_core import SpacedRepetitionEngine, initialize_database
+from flashcard_core import initialize_database
 
 BASE_DIR = Path(__file__).resolve().parent
 # Vercel serverless functions have a read-only project filesystem.
@@ -18,24 +19,18 @@ if os.environ.get("VERCEL"):
 else:
     DB_PATH = BASE_DIR / "flashcards.db"
 EXCEL_PATH = BASE_DIR / "out/adeamus_flashcards.xlsx"
-RECENT_SESSION_KEY = "recent_cards"
-CURRENT_CARD_KEY = "current_cards"
 SESSION_SECRET_SETTING = "SECRET" + "_KEY"
 AUTH_SESSION_KEY = "authenticated"
 FIXED_LOGIN_SECRET_SHA256 = "d818bfc8ee16c5ab61878eba98bf20df33e99cb55ccbf2a5aa615e7edd6e33b0"
 
 app = Flask(__name__)
 app.config[SESSION_SECRET_SETTING] = os.environ.get("FLASHCARD_SECRET_KEY") or secrets.token_hex(32)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=180)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = bool(os.environ.get("VERCEL"))
 
 db_manager = initialize_database(base_dir=BASE_DIR, db_path=DB_PATH, excel_path=EXCEL_PATH)
-
-
-def get_recent_cards_store():
-    return session.setdefault(RECENT_SESSION_KEY, {})
-
-
-def get_current_cards_store():
-    return session.setdefault(CURRENT_CARD_KEY, {})
 
 
 def load_lesson_or_404(lesson):
@@ -45,33 +40,12 @@ def load_lesson_or_404(lesson):
     return lesson
 
 
-def choose_or_restore_card(lesson):
-    current_cards = get_current_cards_store()
-    if lesson in current_cards:
-        card = db_manager.get_card(current_cards[lesson])
-        if card:
-            return card
-        current_cards.pop(lesson, None)
-        session.modified = True
-
-    recent_cards = get_recent_cards_store().get(lesson, [])
-    engine = SpacedRepetitionEngine(db_manager, lesson, recent_card_ids=recent_cards)
-    card = engine.get_next_card()
-    if not card:
-        return None
-
-    current_cards[lesson] = card["id"]
-    get_recent_cards_store()[lesson] = engine.recent_card_ids()
-    session.modified = True
-    return card
-
-
-def lesson_dashboard(lesson):
-    return {
-        "stats": db_manager.get_lesson_stats(lesson),
-        "difficult_words": db_manager.get_difficult_words(limit=5, lektion=lesson),
-        "recent_activity": db_manager.get_recent_activity(limit=8, lektion=lesson),
-    }
+def vocabulary(lesson):
+    # Only vocabulary is served; learning progress lives in the browser's localStorage.
+    return [
+        {"lektion": card["lektion"], "latin": card["latin"], "german": card["german"]}
+        for card in db_manager.get_flashcards_by_lesson(lesson)
+    ]
 
 
 def sanitize_next_page(next_page):
@@ -105,6 +79,7 @@ def login():
         submitted_secret = request.form.get("access_code", "")
         submitted_hash = sha256(submitted_secret.encode("utf-8")).hexdigest()
         if secrets.compare_digest(submitted_hash, FIXED_LOGIN_SECRET_SHA256):
+            session.permanent = True
             session[AUTH_SESSION_KEY] = True
             return redirect(next_page)
         error_message = "Falsches Passwort."
@@ -120,63 +95,15 @@ def logout():
 
 @app.route("/", methods=["GET"])
 def home():
-    lessons = []
-    for lesson in db_manager.get_lessons():
-        lessons.append({
-            "name": lesson,
-            "stats": db_manager.get_lesson_stats(lesson),
-        })
-
-    return render_template(
-        "index.html",
-        lessons=lessons,
-        global_stats=db_manager.get_lesson_stats(),
-        difficult_words=db_manager.get_difficult_words(limit=8),
-        recent_activity=db_manager.get_recent_activity(limit=10),
-    )
+    lessons = db_manager.get_lessons()
+    cards = [card for lesson in lessons for card in vocabulary(lesson)]
+    return render_template("index.html", lessons=lessons, cards=cards)
 
 
 @app.route("/lesson/<lesson>", methods=["GET"])
 def lesson_view(lesson):
     lesson = load_lesson_or_404(lesson)
-    card = choose_or_restore_card(lesson)
-    return render_template(
-        "lesson.html",
-        lesson=lesson,
-        card=card,
-        dashboard=lesson_dashboard(lesson),
-    )
-
-
-@app.post("/lesson/<lesson>/rate")
-def rate_card(lesson):
-    lesson = load_lesson_or_404(lesson)
-    try:
-        rating = int(request.form.get("rating", "0"))
-    except ValueError:
-        rating = 0
-
-    if rating < 1 or rating > 5:
-        abort(400)
-
-    current_cards = get_current_cards_store()
-    card_id = current_cards.get(lesson)
-    if card_id is None:
-        return redirect(url_for("lesson_view", lesson=lesson))
-
-    db_manager.update_rating(card_id, rating)
-    current_cards.pop(lesson, None)
-    session.modified = True
-    return redirect(url_for("lesson_view", lesson=lesson))
-
-
-@app.post("/lesson/<lesson>/reset-session")
-def reset_lesson_session(lesson):
-    lesson = load_lesson_or_404(lesson)
-    get_current_cards_store().pop(lesson, None)
-    get_recent_cards_store().pop(lesson, None)
-    session.modified = True
-    return redirect(url_for("lesson_view", lesson=lesson))
+    return render_template("lesson.html", lesson=lesson, cards=vocabulary(lesson))
 
 
 if __name__ == "__main__":

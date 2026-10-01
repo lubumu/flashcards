@@ -8,12 +8,14 @@
     <p class="lede">Wähle eine Lektion und lerne mit adaptiver Wiederholung. Schwache Karten kommen häufiger zurück, sichere Wörter treten in den Hintergrund.</p>
   </div>
   <div class="hero-card">
-    <div class="metric"><span>{{ global_stats.total }}</span><label>Wörter gesamt</label></div>
-    <div class="metric"><span>{{ global_stats.learned }}</span><label>Gelernt</label></div>
-    <div class="metric"><span>{{ global_stats.avg_rating }}</span><label>Ø Bewertung</label></div>
-    <div class="metric"><span>{{ global_stats.progress_pct }}%</span><label>Fortschritt</label></div>
+    <div class="metric"><span data-global-stat="total">{{ cards|length }}</span><label>Wörter gesamt</label></div>
+    <div class="metric"><span data-global-stat="learned">0</span><label>Gelernt</label></div>
+    <div class="metric"><span data-global-stat="avg_rating">0</span><label>Ø Bewertung</label></div>
+    <div class="metric"><span data-global-stat="progress_pct" data-suffix="%">0%</span><label>Fortschritt</label></div>
   </div>
 </div>
+
+<p class="storage-warning" hidden data-storage-warning>Dein Browser erlaubt keinen lokalen Speicher. Der Lernfortschritt geht beim Schließen verloren.</p>
 
 <div class="dashboard-grid">
   <section class="panel lessons-panel">
@@ -23,16 +25,16 @@
     </div>
     <div class="lesson-list">
       {% for lesson in lessons %}
-      <article class="lesson-card">
+      <article class="lesson-card" data-lesson-card data-lesson="{{ lesson }}">
         <div>
-          <h3>Lektion {{ lesson.name }}</h3>
-          <p>{{ lesson.stats.total }} Wörter · {{ lesson.stats.learned }} gelernt · Ø {{ lesson.stats.avg_rating }}</p>
+          <h3>Lektion {{ lesson }}</h3>
+          <p data-lesson-summary></p>
           <div class="progress-row">
-            <div class="progress-bar"><span style="width: {{ lesson.stats.progress_pct }}%"></span></div>
-            <strong>{{ lesson.stats.progress_pct }}%</strong>
+            <div class="progress-bar"><span data-lesson-bar style="width: 0%"></span></div>
+            <strong data-lesson-pct>0%</strong>
           </div>
         </div>
-        <a class="primary-link" href="{{ url_for('lesson_view', lesson=lesson.name) }}">Lernen</a>
+        <a class="primary-link" href="{{ url_for('lesson_view', lesson=lesson) }}">Lernen</a>
       </article>
       {% endfor %}
     </div>
@@ -44,36 +46,58 @@
         <h2>Schwierige Wörter</h2>
         <p>Niedrige Bewertungen werden priorisiert.</p>
       </div>
-      <ul class="word-list">
-        {% for lesson, latin, german, rating, reviews in difficult_words %}
-        <li>
-          <strong>L{{ lesson }} · {{ latin }}</strong>
-          <span>{{ german }}</span>
-          <small>Bewertung {{ rating }}/5 · {{ reviews }} Wiederholungen</small>
-        </li>
-        {% else %}
-        <li class="empty-state">Noch keine schwierigen Wörter erfasst.</li>
-        {% endfor %}
-      </ul>
+      <ul class="word-list" data-difficult-list></ul>
     </section>
 
     <section class="panel">
       <div class="section-head">
         <h2>Letzte Aktivität</h2>
-        <p>Fortschritt bleibt dauerhaft gespeichert.</p>
+        <p>Fortschritt wird in diesem Browser gespeichert.</p>
       </div>
-      <ul class="activity-list">
-        {% for lesson, latin, german, rating, reviewed_at, reviews in recent_activity %}
-        <li>
-          <strong>L{{ lesson }} · {{ latin }}</strong>
-          <span>{{ german }}</span>
-          <small>{{ rating }}/5 · {{ reviews }}x</small>
-        </li>
-        {% else %}
-        <li class="empty-state">Noch keine Bewertungen gespeichert.</li>
-        {% endfor %}
-      </ul>
+      <ul class="activity-list" data-recent-list></ul>
     </section>
   </aside>
 </div>
+
+<script type="application/json" id="vocab-data">{{ cards|tojson }}</script>
+<script>
+  (function () {
+    const P = window.AdeamusProgress;
+    const cards = P.readJson('vocab-data') || [];
+    const state = P.load();
+
+    if (!P.storageAvailable()) {
+      document.querySelector('[data-storage-warning]').hidden = false;
+    }
+
+    const global = P.stats(state, cards);
+    document.querySelectorAll('[data-global-stat]').forEach((el) => {
+      el.textContent = global[el.dataset.globalStat] + (el.dataset.suffix || '');
+    });
+
+    document.querySelectorAll('[data-lesson-card]').forEach((el) => {
+      const lesson = el.dataset.lesson;
+      const s = P.stats(state, cards.filter((c) => c.lektion === lesson));
+      el.querySelector('[data-lesson-summary]').textContent =
+        s.total + ' Wörter · ' + s.learned + ' gelernt · Ø ' + s.avg_rating;
+      el.querySelector('[data-lesson-bar]').style.width = s.progress_pct + '%';
+      el.querySelector('[data-lesson-pct]').textContent = s.progress_pct + '%';
+    });
+
+    P.renderWordList(
+      document.querySelector('[data-difficult-list]'),
+      P.difficultWords(state, cards, 8),
+      'Noch keine schwierigen Wörter erfasst.',
+      (c) => 'Bewertung ' + c.rating + '/5 · ' + c.review_count + ' Wiederholungen',
+      true
+    );
+    P.renderWordList(
+      document.querySelector('[data-recent-list]'),
+      P.recentActivity(state, cards, 10),
+      'Noch keine Bewertungen gespeichert.',
+      (c) => c.rating + '/5 · ' + c.review_count + 'x',
+      true
+    );
+  })();
+</script>
 {% endblock %}

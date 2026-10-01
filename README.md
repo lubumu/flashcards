@@ -84,4 +84,10 @@ python flashcard_web.py
 
 Open `http://127.0.0.1:5000` in your browser.
 
-The web app keeps progress in `flashcards.db`, grouped by lesson, and uses the same adaptive repetition weights as the desktop app.
+The web app now requires login with a fixed password:
+
+- Password: `adeamus`
+
+The web app stores learning progress (ratings, review counts, current card per lesson) in the browser's `localStorage`, so each user keeps their own progress and continues where they left off after restarting the browser. The server only delivers the vocabulary. Clearing site data in the browser resets the progress.
+
+The login is kept in a persistent cookie (180 days). Set `FLASHCARD_SECRET_KEY` to a fixed random value in production; otherwise users are logged out whenever the server restarts.
